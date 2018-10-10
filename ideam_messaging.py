@@ -11,6 +11,8 @@ import requests
 import json
 import urllib3
 import logging
+from multiprocessing import Process, Lock
+
 logger = logging.getLogger(__name__)
 
 
@@ -184,6 +186,18 @@ def bind(self_id, apikey, entity_id, stream):
         return False, response
 
 
+def registerThread(lock,file):
+
+    start_time = time.time()
+    success, device1_apikey = register("device1")
+    assert(success)
+    print("REGISTER: Registering device1 successful. apikey = {}".format(device1_apikey))
+    end_time=time.time()
+    lock.acquire()
+    file.write(start_time-end_time)
+    file.write("\n")
+    lock.release()
+
 
 
 #=================================================
@@ -195,10 +209,19 @@ def run_test():
 
     try:
 
+        file = open("benchmarking.txt", "w+")
+        lock = Lock()
+        processes = []
         # Register device1
-        success, device1_apikey = register("device1")
-        assert(success)
-        print("REGISTER: Registering device1 successful. apikey = {}".format(device1_apikey))
+        for m in range(1, 100):
+            p = Process(target=registerThread, args=(lock,file))
+            p.start()
+            processes.append(p)
+
+        for p in processes:
+            p.join()
+
+
         
         # Register application1
         success, application1_apikey = register("application1")
