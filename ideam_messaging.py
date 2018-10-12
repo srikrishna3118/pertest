@@ -4,6 +4,7 @@
 # IDEAM middleware using python's requests library.
 #
 # Author: Neha Karanjkar
+# Author: Srikrishna
 
 
 from __future__ import print_function
@@ -27,7 +28,7 @@ IDEAM_ip_address = "127.0.0.1"
 IDEAM_api = "1.0.0"
 
 # urls for sending https requests to the apigateway 
-IDEAM_base_url = "https://"+IDEAM_ip_address+":8443/api/"+IDEAM_api
+IDEAM_base_url = "https://"+IDEAM_ip_address+":8888"#+IDEAM_api
 
 # disable SSL check warnings.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning) 
@@ -44,12 +45,13 @@ def register(self_id):
     else return False, 0
     """
     register_url = IDEAM_base_url+ "/register"
-    register_headers = {'apikey': 'guest', 'content-type':'application/json'}
-    response = requests.post(url=register_url, headers=register_headers, data=streetlight_schema.get_data_from_schema(self_id), verify=False)
+    register_headers = {'apikey': 'admin','id':'admin','entity':self_id,'content-type':'application/json'}
+    response = requests.post(url=register_url, headers=register_headers, data="{'test':'test'}", verify=False)
     r = response.json()
     s = response.status_code
-    if( s == 200 and r["Registration"] == "success"):
-        return True, r["apiKey"]
+    #print(s,r)
+    if( s == 200 ):
+        return True, r["apikey"]
     else:
         logger.error("registration failed for entity {} with response {}".format(self_id,response.text))
         return False, 0
@@ -59,13 +61,15 @@ def deregister(self_id):
     """ De-register an entity with the given self_id.
     If de-registration succeeds return True else return False.
     """
-    deregister_url = IDEAM_base_url+ "/register"
-    deregister_headers = {'apikey': 'guest'}
-    d = {"id":str(self_id)}
-    response = requests.delete(url=deregister_url, headers=deregister_headers, data = json.dumps(d), verify=False)
-    r = response.json()
+    deregister_url = IDEAM_base_url+ "/deregister"
+    device ="admin/"+self_id
+    deregister_headers = {'apikey': 'admin', 'id': 'admin', 'entity': device, 'content-type': 'application/json'}
+    #d = {"id":str(self_id)}
+    response = requests.get(url=deregister_url, headers=deregister_headers, verify=False)
+    #print (response)
     s = response.status_code
-    if( s == 200 and r["De-Registration"] == "success"):
+    #print(s)
+    if( s == 200):
         return True
     else:
         logger.error("de-registration failed for entity {} with response {}".format(self_id,response.text))
