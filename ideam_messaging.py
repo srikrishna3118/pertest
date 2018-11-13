@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 #----------------------------------------
 
 # IP address of the middleware server
-IDEAM_ip_address = "127.0.0.1"
+IDEAM_ip_address = "10.156.14.142"
+#IDEAM_ip_address = "127.0.0.1"
 
 # api version
 IDEAM_api = "1.0.0"
@@ -76,7 +77,7 @@ def deregister(self_id):
         return False
 
 # Publish
-def publish(entity_id, stream, apikey, data):
+def publish(entity_id, apikey, data):
     """ Publish data to a specified entity's exchange.
 
     Arguments:
@@ -85,15 +86,18 @@ def publish(entity_id, stream, apikey, data):
         apikey    : apikey of the publisher
         data      : data (json string) to be published.
     """
-    
-    publish_url = IDEAM_base_url +"/publish/"+entity_id+"."+stream
-    publish_headers = {"apikey":str(apikey)}
-    response = requests.post(url=publish_url, headers=publish_headers, data=data, verify=False)
+    entity_id="admin/"+entity_id
+    publish_url = IDEAM_base_url +"/publish"
+    publish_headers = {"id":entity_id, "apikey":str(apikey),"message-type":"protected","topic":"test","to":entity_id}
+    response = requests.post(url=publish_url, headers=publish_headers, data = data, verify=False)
     s = response.status_code
-    if( s == 202):
+
+    if(s == 202):
         return True
     else:
-        logger.error("publish (stream={}) failed for entity {} with status code {} and response {}".format(stream,entity_id,s,response.text))
+        print("got", s)
+        print(response.json())
+        logger.error("publish (failed for entity {} with status code {} and response {}".format(entity_id,s,response.text))
         return False, 0
 
 
